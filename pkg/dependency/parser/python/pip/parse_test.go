@@ -53,6 +53,11 @@ func TestParse(t *testing.T) {
 			want:     requirementsHyphens,
 		},
 		{
+			name:     "happy path with double hyphens in package name",
+			filePath: "testdata/requirements_hyphens_in_name.txt",
+			want:     requirementsHyphensInName,
+		},
+		{
 			name:     "happy path with exstras",
 			filePath: "testdata/requirement_exstras.txt",
 			want:     requirementsExtras,
@@ -89,6 +94,61 @@ func TestParse(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestStripOptions(t *testing.T) {
+	tests := []struct {
+		name string
+		line string
+		want string
+	}{
+		{
+			name: "hash option is stripped",
+			line: "FooProject == 1.2 --hash=sha256:abc123",
+			want: "FooProject == 1.2",
+		},
+		{
+			name: "continuation line that is only an option is dropped",
+			line: "                  --hash=sha256:abc123",
+			want: "",
+		},
+		{
+			name: "leading option token is dropped",
+			line: "--index-url https://example.com/simple",
+			want: "",
+		},
+		{
+			name: "double hyphen inside name is kept",
+			line: "my--package==1.0.0",
+			want: "my--package==1.0.0",
+		},
+		{
+			name: "double hyphen inside name is kept while option is stripped",
+			line: "zope--interface==5.0.0 --hash=sha256:abc123",
+			want: "zope--interface==5.0.0",
+		},
+		{
+			name: "multiple double hyphens inside name are kept",
+			line: "a--b--c==2.2.2",
+			want: "a--b--c==2.2.2",
+		},
+		{
+			name: "no option and no double hyphen",
+			line: "flask==2.0.0",
+			want: "flask==2.0.0",
+		},
+		{
+			name: "empty string",
+			line: "",
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, stripOptions(tt.line))
 		})
 	}
 }

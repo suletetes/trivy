@@ -20,7 +20,7 @@ import (
 const (
 	commentMarker string = "#"
 	endColon      string = ";"
-	hashMarker    string = "--"
+	optionMarker  string = "--"
 	startExtras   string = "["
 	endExtras     string = "]"
 )
@@ -84,11 +84,14 @@ func (p *Parser) Parse(_ context.Context, r xio.ReadSeekerAt) ([]ftypes.Package,
 	for scanner.Scan() {
 		lineNumber++
 		text := scanner.Text()
-		line := strings.ReplaceAll(text, " ", "")
+		// Remove pip options (e.g. `--hash`, `--index-url`) based on the original
+		// whitespace-delimited token boundaries, before spaces are collapsed.
+		// This keeps a `--` embedded inside a package name (e.g. `my--package`) intact.
+		line := stripOptions(text)
+		line = strings.ReplaceAll(line, " ", "")
 		line = strings.ReplaceAll(line, `\`, "")
 		line = rStripByKey(line, commentMarker)
 		line = rStripByKey(line, endColon)
-		line = rStripByKey(line, hashMarker)
 		line, err := removeExtras(line)
 		if err != nil {
 			// Skip only this line: returning an error would drop all packages from the file.
@@ -126,6 +129,26 @@ func (p *Parser) Parse(_ context.Context, r xio.ReadSeekerAt) ([]ftypes.Package,
 		return nil, nil, xerrors.Errorf("scan error: %w", err)
 	}
 	return pkgs, nil, nil
+}
+
+// stripOptions removes pip requirement options from a physical line.
+// An option is a whitespace-delimited token that starts with `--`
+// (e.g. `--hash`, `--index-url`, `--global-option`). It is cut at the first
+// such token and the result is right-trimmed of trailing whitespace.
+// A `--` embedded in the middle of a token (e.g. `my--package`) is left intact,
+// because such a token does not start with `--`.
+func stripOptions(line string) string {
+	for i := 0; i+len(optionMarker) <= len(line); i++ {
+		if line[i:i+len(optionMarker)] != optionMarker {
+			continue
+		}
+		// The `--` must start a token: either at the beginning of the line
+		// or immediately preceded by whitespace.
+		if i == 0 || unicode.IsSpace(rune(line[i-1])) {
+			return strings.TrimRightFunc(line[:i], unicode.IsSpace)
+		}
+	}
+	return line
 }
 
 func rStripByKey(line, key string) string {

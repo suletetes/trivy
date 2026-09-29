@@ -1,0 +1,5 @@
+click==8.0.0
+my--package==1.0.0
+zope--interface==5.0.0 --hash=sha256:abc123
+normal-name==2.0.0  # comment
+a--b--c==2.2.2

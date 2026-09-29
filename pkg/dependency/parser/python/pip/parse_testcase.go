@@ -286,6 +286,59 @@ var (
 		},
 	}
 
+	requirementsHyphensInName = []ftypes.Package{
+		{
+			Name:    "click",
+			Version: "8.0.0",
+			Locations: []ftypes.Location{
+				{
+					StartLine: 1,
+					EndLine:   1,
+				},
+			},
+		},
+		{
+			Name:    "my--package",
+			Version: "1.0.0",
+			Locations: []ftypes.Location{
+				{
+					StartLine: 2,
+					EndLine:   2,
+				},
+			},
+		},
+		{
+			Name:    "zope--interface",
+			Version: "5.0.0",
+			Locations: []ftypes.Location{
+				{
+					StartLine: 3,
+					EndLine:   3,
+				},
+			},
+		},
+		{
+			Name:    "normal-name",
+			Version: "2.0.0",
+			Locations: []ftypes.Location{
+				{
+					StartLine: 4,
+					EndLine:   4,
+				},
+			},
+		},
+		{
+			Name:    "a--b--c",
+			Version: "2.2.2",
+			Locations: []ftypes.Location{
+				{
+					StartLine: 5,
+					EndLine:   5,
+				},
+			},
+		},
+	}
+
 	requirementsExtras = []ftypes.Package{
 		{
 			Name:    "pyjwt",
